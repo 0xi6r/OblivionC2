@@ -8,7 +8,7 @@ use uuid::Uuid;
     defining core types
     */
 
-#[derive(serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 struct Beacon {
     id: Uuid,
     hostname: String,
