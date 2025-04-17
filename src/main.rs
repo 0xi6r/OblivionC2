@@ -1,5 +1,5 @@
 use active_web::{web, App, HttpServer, HttpResponse, Responder};
-use serde::{serialize, Deserialize};
+use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use uuid::Uuid;
