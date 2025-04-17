@@ -1,4 +1,4 @@
-async fn post_result(
+pub async fn post_result(
     data: web::Data<AppState>,
     id: web::Path<Uuid>,
     result: web::Json<ResultData>
