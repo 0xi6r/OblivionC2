@@ -7,7 +7,7 @@ use uuid::Uuid;
 /*
     defining core types
     */
-    
+
 #[derive(serialize, Deserialize, Clone)]
 struct Beacon {
     id: Uuid,
@@ -27,4 +27,10 @@ struct ResultData{
 
 fn main() {
     println!("Hello, world!");
+}
+
+// setting up state
+struct AppState {
+    beacons: Mutex<HashMap<Uuid, Beacon>>,
+    tasks: Mutex<Hashing<Uuid, Task>>,
 }
