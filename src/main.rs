@@ -20,7 +20,7 @@ struct Task {
     command: String,
 }
 
-#[derive(Serialize, Deseriaize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 struct ResultData{
     output: String,
 }
