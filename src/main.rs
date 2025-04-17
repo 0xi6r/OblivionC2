@@ -26,9 +26,22 @@ struct ResultData{
 }
 
 #[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let state = web::Data::new(AppState {
+        beacons: Mutex::new(HashMap::new()),
+        tasks: Mutex::new(HashMap::new()),
+    });
 
-fn main() {
-    println!("Hello, world!");
+    HttpServer::new(move || {
+        App::new()
+            .app_data(state.clone())
+            .route("/beacon", web::post().to(beacon))
+            .route("/task/{id}", web::get().to(get_task))
+            .route("/result/{id}", web::post().to(post_result))
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
 }
 
 // setting up state
