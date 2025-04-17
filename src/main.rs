@@ -46,7 +46,9 @@ async fn main() -> std::io::Result<()> {
 }
 
 // setting up state
+/*
 struct AppState {
     beacons: Mutex<HashMap<Uuid, Beacon>>,
     tasks: Mutex<Hashing<Uuid, Task>>,
 }
+    */
