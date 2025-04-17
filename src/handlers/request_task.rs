@@ -1,4 +1,4 @@
-async fn get_task(
+pub async fn get_task(
     data: web::Data<AppState>,
     id: web::Path<Uuid>
 ) -> impl Responder {

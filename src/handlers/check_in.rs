@@ -1,6 +1,6 @@
 // implant check in
 
-async fn beacon(
+pub async fn beacon(
     data: web::Data<AppState>,
     beacon: web::Json<Beacon>
 ) -> impl Responder {
